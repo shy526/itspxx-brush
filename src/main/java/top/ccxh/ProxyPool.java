@@ -1,7 +1,11 @@
 package top.ccxh;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
+import com.sun.corba.se.spi.orbutil.threadpool.Work;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.jsoup.Jsoup;
@@ -66,13 +70,7 @@ public class ProxyPool {
                         Elements trs = table.select("tr");
                         for (Element tr : trs) {
                             String ip = tr.select("td:eq(0").text();
-                            if (StringUtils.isNotEmpty(ip)) {
-                                if (!DISTINCT_URL.mightContain(ip)){
-                                    TEST_QUEUE.offer(ip);
-                                    DISTINCT_URL.put(ip);
-                                }
-
-                            }
+                            distinctOffer(ip);
                         }
                         index++;
                         Thread.sleep(1000);
@@ -82,7 +80,40 @@ public class ProxyPool {
                 }
             }
         });
+        WORK_THREAD_POOL.execute(new Runnable() {
+            @Override
+            public void run() {
+                while (true){
+                    String url="http://lab.crossincode.com/proxy/get/?num=10000";
+                    String result = httpClientService.doGet(url);
+                    if (StringUtils.isNotEmpty(result)) {
+                        JSONObject jsonObject = JSON.parseObject(result);
+                        JSONArray jsonArray = jsonObject.getJSONArray("proxies");
+                        for (Object item:jsonArray){
+                            JSONObject item1 = (JSONObject) item;
+                            String ip = item1.getString("http");
+                            distinctOffer(ip);
+                        }
+                    }
+                    try {
+                        Thread.sleep(3500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
 
+            }
+        });
+    }
+
+    private static void distinctOffer(String ip) {
+        if (StringUtils.isNotEmpty(ip)) {
+            if (!DISTINCT_URL.mightContain(ip)){
+                TEST_QUEUE.offer(ip);
+                DISTINCT_URL.put(ip);
+            }
+
+        }
     }
 
     private static void test() {
