@@ -1,5 +1,7 @@
 package top.ccxh;
 
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.jsoup.Jsoup;
@@ -10,6 +12,7 @@ import top.ccxh.farmer.http.HttpClientFactory;
 import top.ccxh.farmer.http.HttpClientService;
 import top.ccxh.farmer.thread.ThreadPoolUtils;
 
+import java.nio.charset.Charset;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -23,6 +26,7 @@ public class ProxyPool {
     private final static ThreadPoolExecutor WORK_THREAD_POOL = ThreadPoolUtils.getThreadPool("ProxyPool");
     private final static HttpClientService httpClientService = HttpClientFactory.getHttpClientService();
     private final static HttpClientService httpClientService2 = HttpClientFactory.getHttpClientService();
+    private final static BloomFilter<String>  DISTINCT_URL=BloomFilter.create(Funnels.stringFunnel(Charset.forName("utf-8")), 1000000, 0.000001);
 
     public static void main(String[] args) throws InterruptedException {
         String url = "https://www.kuaidaili.com/free/inha/%s/";
@@ -36,46 +40,45 @@ public class ProxyPool {
         //http://www.nimadaili.com/http/2/
         String url7 = "http://ip.jiangxianli.com/api/proxy_ips?page=%s";
 
-        String url9 = "http://www.nimadaili.com/gaoni/%s/";
+        String url9 =  "http://www.nimadaili.com/putong/%s/";
         String url13 = "https://www.waitig.com/proxy/proxy-0-%s.html";
         int index = 1;
 
-        while (true) {
-
-
-
-           /*  url Elements trs = table.select("tr");
-            for (Element tr:trs){
-                String ip = tr.select("td:eq(0").text();
-                String port = tr.select("td:eq(1)").text();
-                    test(httpClientService,port,ip);
-            }*/
-
-        }
+        build();
     }
 
     public static void build() {
+
         test();
         WORK_THREAD_POOL.execute(new Runnable() {
             @Override
             public void run() {
-                int index = 0;
+                int index = 1;
                 while (true) {
-                    String url8 = "http://www.nimadaili.com/putong/%s/";
-                    String result = httpClientService.doGet(String.format(url8, index + ""));
-                    if (StringUtils.isEmpty(result)) {
-                        break;
-                    }
-                    Document parse = Jsoup.parse(result);
-                    Elements table = parse.body().select("table");
-                    Elements trs = table.select("tr");
-                    for (Element tr : trs) {
-                        String ip = tr.select("td:eq(0").text();
-                        if (StringUtils.isNotEmpty(ip)) {
-                            TEST_QUEUE.offer(ip);
+                    try {
+                        String url8 = "http://www.nimadaili.com/gaoni/%s/";
+                        String result = httpClientService.doGet(String.format(url8, index + ""));
+                        if (StringUtils.isEmpty(result)) {
+                            break;
                         }
+                        Document parse = Jsoup.parse(result);
+                        Elements table = parse.body().select("table");
+                        Elements trs = table.select("tr");
+                        for (Element tr : trs) {
+                            String ip = tr.select("td:eq(0").text();
+                            if (StringUtils.isNotEmpty(ip)) {
+                                if (!DISTINCT_URL.mightContain(ip)){
+                                    TEST_QUEUE.offer(ip);
+                                    DISTINCT_URL.put(ip);
+                                }
+
+                            }
+                        }
+                        index++;
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+
                     }
-                    index++;
                 }
             }
         });
@@ -95,9 +98,9 @@ public class ProxyPool {
                                 try {
                                     String[] split = ip.split(":");
                                     if (split.length == 2) {
-                                        String s = httpClientService.doGet("https://www.baidu.com/", Integer.parseInt(split[1]), split[0]);
+                                        String s = httpClientService.doGet("https://www.itspxx.com/forum.php?x=15933", Integer.parseInt(split[1]), split[0]);
                                         if (StringUtils.isNotEmpty(s)) {
-                                            SUCCEED_QUEUE.offer(s);
+                                            SUCCEED_QUEUE.offer(ip);
                                         }
                                     }
                                 } catch (Exception e) {
@@ -122,7 +125,11 @@ public class ProxyPool {
         return new HttpHost(split[0], Integer.parseInt(split[1]));
     }
     public static String getIp() {
-        return SUCCEED_QUEUE.poll();
-
+        try {
+            return SUCCEED_QUEUE.take();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
