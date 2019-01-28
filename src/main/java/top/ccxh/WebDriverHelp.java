@@ -2,10 +2,13 @@ package top.ccxh;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.xmlgraphics.image.loader.impl.ImageBuffered;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,7 +22,6 @@ import java.util.List;
  * @author admin
  */
 public class WebDriverHelp {
-    private WebDriver webDriver;
     public String driverPath = WebDriverHelp.class.getResource("/driver").getFile();
 
     public WebDriver createChromeDriver(String ip) {
@@ -31,8 +33,8 @@ public class WebDriverHelp {
 //        options.setExperimentalOption("profile.managed_default_content_settings.images",2);
         options.addArguments("--disk-cache-dir=D:\\itspxx-brush\\src\\main\\resources\\cache");
         String path = driverPath + "/chromedriver";
-        if (StringUtils.isNotEmpty(ip)){
-            options.addArguments("--proxy-server=http://"+ip);
+        if (StringUtils.isNotEmpty(ip)) {
+            options.addArguments("--proxy-server=http://" + ip);
         }
         if (System.getProperty("os.name").toUpperCase().indexOf("WINDOWS") > -1) {
             path = path + ".exe";
@@ -48,22 +50,13 @@ public class WebDriverHelp {
         System.setProperty("webdriver.chrome.driver", file.getAbsolutePath());
 
         WebDriver chromeDriver = new ChromeDriver(options);
-        chromeDriver.manage().window().setSize(new Dimension(1920,1080 ));
+        chromeDriver.manage().window().setSize(new Dimension(1920, 1080));
         return chromeDriver;
 
     }
 
-    public WebDriver getChromeDriver(String ip) {
-        if (webDriver == null) {
-            webDriver = createChromeDriver(ip);
-            //1280*720
-            webDriver.manage().window().setSize(new Dimension(1920,1080 ));
-            return webDriver;
-        }
-        return webDriver;
-    }
 
-    public void printScreen(String filePath) {
+    public void printScreen(String filePath, WebDriver webDriver) {
         File srcFile = ((TakesScreenshot) webDriver).getScreenshotAs(OutputType.FILE);
         //利用FileUtils工具类的copyFile()方法保存getScreenshotAs()返回的文件对象。
         try {
@@ -71,6 +64,15 @@ public class WebDriverHelp {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public BufferedImage printScreen(WebDriver webDriver) {
+        try {
+            return ImageIO.read(((TakesScreenshot) webDriver).getScreenshotAs(OutputType.FILE));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     static void sleep(int i) {
@@ -81,7 +83,7 @@ public class WebDriverHelp {
         }
     }
 
-    public void close() {
+    public static void close(WebDriver webDriver) {
         if (webDriver != null) {
             webDriver.close();
             webDriver.quit();
@@ -89,12 +91,11 @@ public class WebDriverHelp {
         }
     }
 
-    public String newTable(String url) {
-        String js = "window.open('"+url+"')";
+    public String newTable(String url, WebDriver webDriver) {
+        String js = "window.open('" + url + "')";
         ((JavascriptExecutor) webDriver).executeScript(js);
         String handle = webDriver.getWindowHandle();
-        List<String> list = new ArrayList<String>( webDriver.getWindowHandles());
-
-        return list.get(list.size()-1);
+        List<String> list = new ArrayList<String>(webDriver.getWindowHandles());
+        return list.get(list.size() - 1);
     }
 }

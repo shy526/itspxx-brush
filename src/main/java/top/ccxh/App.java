@@ -1,22 +1,28 @@
 package top.ccxh;
 
-import net.sourceforge.tess4j.ITesseract;
-import net.sourceforge.tess4j.Tesseract;
 import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.*;
-import top.ccxh.farmer.image.ImageUtils;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class App {
+    private final static String GENERALIZE_URL = "https://www.itspxx.com/forum.php?x=15933";
+    private final static String REGISTER_XPATH = "//*[@id=\"deanheader\"]/div/div[4]/div/div/div/a[2]";
+    private final static String USER_NAME_XPATH = "//*[@id=\"reginfo_a\"]/div[1]/table/tbody/tr/td[1]/input";
+    private final static String PASSWORD_XPATH = "//*[@id=\"reginfo_a\"]/div[2]/table/tbody/tr/td[1]/input";
+    private final static String RE_PASSWORD_XPATH = "//*[@id=\"reginfo_a\"]/div[3]/table/tbody/tr/td[1]/input";
+    private final static String EMAIL_XPATH = "//*[@id=\"reginfo_a\"]/div[4]/table/tbody/tr/td[1]/input";
+    private final static String USER_ICON_XPATH = "//*[@id=\"b_0\"]";
+    private final static String VERIFY_XPATH = "//*[@name=\"seccodeverify\"]";
+    private final static String SUBMIT_XPATH = "//*[@id=\"registerformsubmit\"]";
+    private final static String SUCCEED_FLAG_XPATH = "//*[@id=\"succeedmessage\"]";
+    private final static String VERIFY_CUT_XPATH = "//*[@id=\"reginfo_a\"]/span/div/table/tbody/tr/td/a";
+    private final static String ERROR_PAGE_XPATH = "//*[@id=\"main-message\"]/h1/span";
+    private final static String SUCCEED_SKIP_XPATH = "//*[@id=\"succeedmessage_href\"]";
+    private final static String VERIFY_IMG_XPATH = "//*[@id=\"reginfo_a\"]/span/div/table/tbody/tr/td/span[2]";
     public static void main(String[] args) throws Exception {
         WebDriverHelp webDriverHelp = new WebDriverHelp();
         ProxyPool.build();
@@ -28,162 +34,69 @@ public class App {
                 continue;
             }
             System.out.println("使用ip:" + ip);
-            long begin=System.currentTimeMillis();
+            long begin = System.currentTimeMillis();
             WebDriver chromeDriver = webDriverHelp.createChromeDriver(ip);
             try {
                 chromeDriver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-                //  chromeDriver.get("https://www.baidu.com/s?wd=ip&rsv_spt=1&rsv_iqid=0xe36922a4000cbe75&issp=1&f=8&rsv_bp=0&rsv_idx=2&ie=utf-8&tn=baiduhome_pg&rsv_enter=1&rsv_sug2=0&inputT=545&rsv_sug4=1372");
-                try {
-                    chromeDriver.get("https://www.itspxx.com/forum.php?x=15933");
-                    //  chromeDriver.get("https://www.itspxx.com/member.php?mod=register");
-                    System.out.println("页面加载完成");
-                } catch (Exception e) {
-                    chromeDriver.close();
-                    chromeDriver.quit();
-                    continue;
-                }
+                chromeDriver.get(GENERALIZE_URL);
+                System.out.println("首页面加载完成");
 
-                boolean t = true;
-                try {
-                    chromeDriver.findElement(By.xpath("//*[@id=\"main-message\"]/h1/span"));
-                } catch (Exception e) {
-                    t = false;
-                }
-                if (t) {
-                    System.out.println("加载失败");
-                    chromeDriver.close();
-                    chromeDriver.quit();
-                    continue;
-                }
-                // String emailTable = webDriverHelp.newTable("https://www.baidu.com/");
-                //String handle = chromeDriver.getWindowHandle();
-                // chromeDriver.switchTo().window(emailTable);;
-                // chromeDriver.get("https://10minutemail.net/");
-                // String email = chromeDriver.findElement(By.xpath("//*[@id=\"fe_text\"]")).getAttribute("value");
-                // chromeDriver.findElement(By.xpath("//*[@id=\"left\"]/ul/li[3]/a")).click();
-                // chromeDriver.switchTo().window(handle);
+
+                ifErrorPage(chromeDriver);
+
+
+
                 String email = randomStr();
-                String registerXpath = "//*[@id=\"deanheader\"]/div/div[4]/div/div/div/a[2]";
-                chromeDriver.findElement(By.xpath(registerXpath)).click();
-                String userNameXpath = "//*[@id=\"reginfo_a\"]/div[1]/table/tbody/tr/td[1]/input ";
-                String passwordXpath = "//*[@id=\"reginfo_a\"]/div[2]/table/tbody/tr/td[1]/input  ";
-                String rePasswordXPath = "//*[@id=\"reginfo_a\"]/div[3]/table/tbody/tr/td[1]/input  ";
-                String emailXpath = "//*[@id=\"reginfo_a\"]/div[4]/table/tbody/tr/td[1]/input ";
-                String imgXpath = "//*[@id=\"b_0\"]";
-                //*[@id="reginfo_a"]/div[1]/table/tbody/tr/td[1]
-                chromeDriver.findElement(By.xpath(userNameXpath)).sendKeys(email);
-                chromeDriver.findElement(By.xpath(passwordXpath)).sendKeys(email);
-                chromeDriver.findElement(By.xpath(rePasswordXPath)).sendKeys(email);
-                chromeDriver.findElement(By.xpath(emailXpath)).sendKeys(email);
-                chromeDriver.findElement(By.xpath(imgXpath)).click();
-                WebElement a = chromeDriver.findElement(By.xpath("//*[@id=\"reginfo_a\"]/span/div/table/tbody/tr/td/a"));
-                boolean flag = true;
+
+                chromeDriver.findElement(By.xpath(REGISTER_XPATH)).click();
+                System.out.println("跳转注册页面");
+
+
+                chromeDriver.findElement(By.xpath(USER_NAME_XPATH)).sendKeys(email);
+                chromeDriver.findElement(By.xpath(PASSWORD_XPATH)).sendKeys(email);
+                chromeDriver.findElement(By.xpath(RE_PASSWORD_XPATH)).sendKeys(email);
+                chromeDriver.findElement(By.xpath(EMAIL_XPATH)).sendKeys(email);
+                chromeDriver.findElement(By.xpath(USER_ICON_XPATH)).click();
+
+                //切换验证码
+                WebElement a = chromeDriver.findElement(By.xpath(VERIFY_CUT_XPATH));
+
                 System.out.println("完成基本操作");
-                while (flag) {
-                    chromeDriver.findElement(By.xpath("//*[@name=\"seccodeverify\"]")).clear();
 
+                int verifyIndex = 0;
+                while (true) {
+
+                    chromeDriver.findElement(By.xpath(VERIFY_XPATH)).clear();
                     a.click();
-                    // System.out.println("a = " + System.currentTimeMillis());
+                    Thread.sleep(2000);
+                    BufferedImage read = webDriverHelp.printScreen(chromeDriver);
+                    WebElement source = chromeDriver.findElement(By.xpath(VERIFY_IMG_XPATH)).findElement(By.tagName("img"));
+                    BufferedImage verify = read.getSubimage(source.getLocation().x, source.getLocation().y, 100, 30);
+                    String verifyCode = VerifyCrack.imageDispose(verify);
+                    chromeDriver.findElement(By.xpath(VERIFY_XPATH)).sendKeys(verifyCode);
                     Thread.sleep(3000);
-                    BufferedImage read = ImageIO.read(((TakesScreenshot) chromeDriver).getScreenshotAs(OutputType.FILE));
-                    WebElement element = chromeDriver.findElement(By.xpath("//*[@id=\"reginfo_a\"]/span/div/table/tbody/tr/td/span[2]"));
-                    WebElement source = element.findElement(By.tagName("img"));
-                    // BufferedImage read = ImageIO.read(((TakesScreenshot) chromeDriver).getScreenshotAs(OutputType.FILE));
-                    BufferedImage subimage = read.getSubimage(source.getLocation().x, source.getLocation().y, 100, 30);
-                    String s = imageDispose(subimage);
-
-
-                    chromeDriver.findElement(By.xpath("//*[@name=\"seccodeverify\"]")).sendKeys(s);
-                    Thread.sleep(4000);
-                    chromeDriver.findElement(By.xpath("//*[@id=\"registerformsubmit\"]")).click();
-                    WebElement element1 = chromeDriver.findElement(By.xpath("//*[@id=\"succeedmessage\"]"));
+                    chromeDriver.findElement(By.xpath(SUBMIT_XPATH)).click();
+                    WebElement element1 = chromeDriver.findElement(By.xpath(SUCCEED_FLAG_XPATH));
+                    verifyIndex++;
                     if (!"".equals(element1.getText())) {
-                        flag = false;
-                    }
-                }
-                chromeDriver.findElement(By.xpath("//*[@id=\"succeedmessage_href\"]")).click();
-                chromeDriver.close();
-                chromeDriver.quit();
-                index++;
-                System.out.println("第"+index+"个注册成功,所用:"+ip +",用时:"+(System.currentTimeMillis()-begin));
-            } catch (Exception e) {
-                BufferedImage tt = ImageIO.read(((TakesScreenshot) chromeDriver).getScreenshotAs(OutputType.FILE));
-                String str=System.currentTimeMillis()+"";
-                ImageIO.write(tt, "png", new File("D:\\360用户文件\\" + System.currentTimeMillis() + ".png"));
-                chromeDriver.close();
-                chromeDriver.quit();
-                System.out.println("异常:"+str);
-            }
-        }
-
-
-    }
-
-    public static String imageDispose(BufferedImage bufferedImage) throws Exception {
-        ArrayList<BufferedImage> arrayList = new ArrayList<>();
-        BufferedImage image = ImageUtils.flowImage(bufferedImage);
-        Deque<Integer> integers = new LinkedList<>();
-        int height = image.getHeight();
-        int width = image.getWidth();
-        for (int x = 0; x < width; x++) {
-            int flag = 0;
-            for (int y = 0; y < height; y++) {
-                int rgb = image.getRGB(x, y);
-                if (rgb != -1) {
-                    flag++;
-                    break;
-                }
-
-            }
-            if (flag <= 0) {
-                integers.add(-1);
-            } else {
-                integers.add(x);
-            }
-        }
-        int min = -1;
-        int max = -1;
-
-        while (integers.size() > 0) {
-            Integer pop = integers.pop();
-            if (pop != -1) {
-                min = pop;
-                int t = 0;
-                while (integers.size() > 0) {
-                    Integer v = integers.pop();
-                    if (v == -1) {
-                        max = t;
                         break;
-                    } else {
-                        t = v;
                     }
+
                 }
-            }
-            if (min != -1 && max != -1) {
-                BufferedImage subimage = image.getSubimage(min, 0, max - min + 1, height - 1);
-                arrayList.add(subimage);
-                min = max = -1;
+                chromeDriver.findElement(By.xpath(SUCCEED_SKIP_XPATH)).click();
+                WebDriverHelp.close(chromeDriver);
+                index++;
+                System.out.println("第" + index + "个注册成功,所用:" + ip + ",用时:" + (System.currentTimeMillis() - begin) + ",校验次数:" + verifyIndex);
+            } catch (Exception e) {
+                String str = System.currentTimeMillis() + "";
+                WebDriverHelp.close(chromeDriver);
+                System.out.println("\n异常:" + str);
             }
         }
 
-        ITesseract instance = new Tesseract();
-        instance.setDatapath("D:\\netty-demo\\src\\main\\resources\\tessdata");
-        instance.setLanguage("eng");
 
-        String str = "";
-        if (arrayList.size() == 4) {
-            for (BufferedImage code : arrayList) {
-                String s = instance.doOCR(code);
-                str += s.trim().replaceAll("\\s*|\t|\r|\n", "")
-                        .replaceAll("[\\pP+~$`^=|<>～｀＄＾＋＝｜＜＞￥×]", "")
-                        .replaceAll("[\\p{P}+~$`^=|<>～｀＄＾＋＝｜＜＞￥×]", "");
-            }
-        }
-        if (str.length() != 4) {
-            return "";
-        }
-        return str;
     }
+
 
     public static String randomStr() {
         int i = 10;
@@ -211,5 +124,14 @@ public class App {
         }
         sb.append("@outlook.com");
         return sb.toString();
+    }
+
+    public static void ifErrorPage(WebDriver webDriver){
+        try {
+            webDriver.findElement(By.xpath(ERROR_PAGE_XPATH));
+        }catch (Exception e){
+            return;
+        }
+        throw new RuntimeException("加载失败");
     }
 }

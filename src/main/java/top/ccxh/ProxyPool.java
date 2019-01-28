@@ -89,6 +89,13 @@ public class ProxyPool {
                     if (StringUtils.isNotEmpty(result)) {
                         JSONObject jsonObject = JSON.parseObject(result);
                         JSONArray jsonArray = jsonObject.getJSONArray("proxies");
+                        if (jsonArray==null){
+                            try {
+                                Thread.sleep(3500);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
                         for (Object item:jsonArray){
                             JSONObject item1 = (JSONObject) item;
                             String ip = item1.getString("http");
@@ -98,7 +105,6 @@ public class ProxyPool {
                     try {
                         Thread.sleep(3500);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
                 }
 
