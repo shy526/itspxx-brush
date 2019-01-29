@@ -28,7 +28,7 @@ public class WebDriverHelp {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("disable-infobars");
         //options.addArguments("--start-maximized");
-        options.addArguments("headless");
+      //  options.addArguments("headless");
         options.addArguments("no-sandbox");
 //        options.setExperimentalOption("profile.managed_default_content_settings.images",2);
         options.addArguments("--disk-cache-dir=D:\\itspxx-brush\\src\\main\\resources\\cache");
